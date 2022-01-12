@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shop_list/shared/app_text_style.dart';
+import 'package:shop_list/shared/theme/app_text_style.dart';
 
 class DrawerItem extends StatelessWidget {
 

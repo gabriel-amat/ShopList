@@ -1,21 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:shop_list/controller/login/login_controller.dart';
-import 'package:shop_list/shared/app_colors.dart';
-import 'package:shop_list/shared/notifications.dart';
+import 'package:shop_list/models/user/user_model.dart';
+import 'package:shop_list/shared/theme/app_colors.dart';
+import 'package:shop_list/shared/widget/notifications.dart';
 
-class ResetPasswordPage extends StatelessWidget {
-
-  final _email = TextEditingController();
-  final _form = GlobalKey<FormState>();
-  final _notification = CustomNotification();
+class ResetPasswordPage extends StatefulWidget {
 
   final LoginController loginController;
 
   ResetPasswordPage({required this.loginController});
 
+  @override
+  State<ResetPasswordPage> createState() => _ResetPasswordPageState();
+}
+
+class _ResetPasswordPageState extends State<ResetPasswordPage> {
+  
+  final _email = TextEditingController();
+  final _form = GlobalKey<FormState>();
+  final _notification = CustomNotification();
+
+  @override
+  void initState() {
+    super.initState();
+    if(widget.loginController.userData.hasValue){
+      UserModel user = widget.loginController.userData.value!;
+      _email.text = user.email ?? '';
+    }
+  }
+
   void _onSubmit(BuildContext context) async{
     if(_form.currentState!.validate()){
-      bool success = await loginController.resetPassword();
+      bool success = await widget.loginController.resetPassword(_email.text);
 
       if(success){
         _notification.showSnackSuccessWithIcon(

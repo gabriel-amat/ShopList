@@ -1,117 +1,89 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:shop_list/controller/login/login_controller.dart';
-import 'package:shop_list/controller/login/login_state.dart';
-import 'package:shop_list/database/preferences_db.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:shop_list/models/shop/item_model.dart';
 import 'package:shop_list/models/shop/shop_list_model.dart';
-import 'package:shop_list/service/firebase_db.dart';
+import 'package:shop_list/service/shopList_service.dart';
 
-class ShopListController extends ChangeNotifier{
+class ShopListController{
 
-  final _firebaseDB = FirebaseDB();
-  final _preferencesDB = PreferencesDB.instance;
+  final shopListService = ShopListService();
 
-  List<ShopListModel> _shopList = [];
-  List<ShopListModel> get shopList => _shopList;
-  set shopList (List<ShopListModel> newValue) => _shopList = List.from(newValue);
+  var shopLists = BehaviorSubject<List<ShopListModel>?>();
+  Stream<List<ShopListModel>?> get outShopLists => shopLists.stream;
+
+  var listData = BehaviorSubject<ShopListModel?>();
+  Stream<ShopListModel?> get outList => listData.stream;
+
 
   //Functions
-  //FIREBASE FUNCTIONS-----------------------------------------------
-  Future<void> getAllShopListsFromFirebase() async {
-    var _shopList = await _firebaseDB.getMyShopLists();
-    notifyListeners();
-  }
-
-  Future<void> saveListOnFirebase(ShopListModel list) async {
-    _firebaseDB.saveNewList(data: list);
-  }
-
-  Future<bool> deleteShopList(String docId) async {
-    return _firebaseDB.deleteList(listId: docId);
-  }
-
-  Future<bool> updateShopList(ShopListModel data) async {
-    return _firebaseDB.updateList(data);
-  }
-  //END FIREBASE FUNCTIONS-----------------------------------------------
-
-  void saveMyListsLocally(){
-    _preferencesDB.storeMyLists(shopList);
-  }
-
-  void createShopList({
-    required String title,
-    required LoginController loginController
-  }){
-    final _data = ShopListModel(
-      name: title,
-      products: []
-    );
-    shopList.add(_data);
-    saveMyListsLocally();
-    notifyListeners();
-    if(loginController.loginState.value.state == stateLogin.LOGGED){
-      saveListOnFirebase(_data);
+  Future<void> getAllLists(bool update) async {
+    if(!shopLists.hasValue || update){
+      shopLists.add(await shopListService.getAllLists());
     }
   }
 
-  void addItemToShopList({required ShopListModel list, required ItemModel item}){
-    shopList.map((e){
-      if(e == list){
-        e.products!.add(item);
-      }
-    }).toList();
-    saveMyListsLocally();
-    notifyListeners();
-  }
+  Future<void> getList(String id) async{
+    ShopListModel? _list = await shopListService.getList(id);
 
-  void checkItem({
-    required ShopListModel list,
-    required bool value,
-    required ItemModel item}){
-    shopList.map((e){
-      e.products!.map((p){
-        if(p == item){
-          p.checked = value;
+    if(_list != null && _list.products != null && _list.products!.isNotEmpty){
+      List<ItemModel> _itensChecked = [];
+      _list.products!.map((e){
+        if(e.checked!){
+          _itensChecked.add(e);
         }
       }).toList();
-    }).toList();
-    saveMyListsLocally();
-    notifyListeners();
+      //Remover os itens checked que estao em ordem aleatorio
+      _list.products!.removeWhere((e) => _itensChecked.contains(e));
+      //Adiciona no final da lista
+      var _newList = _list.products!.followedBy(_itensChecked).toList();
+      _list.products = List.from(_newList);
+    }
+
+    listData.add(_list);
   }
 
-  void editListName({required ShopListModel list, required String name}){
-    shopList.map((e){
-      if(e == list){
-        e.name = name;
-      }
-    }).toList();
-
-    saveMyListsLocally();
-    notifyListeners();
+  Future<bool> createList(ShopListModel list) async {
+    bool success = await shopListService.createList(data: list);
+    if(success) getAllLists(true);
+    return success;
   }
 
-  void deleteList(ShopListModel list){
-    _shopList.remove(list);
-    saveMyListsLocally();
-    notifyListeners();
+  Future<bool> deleteShopList(String docId) async {
+    bool success = await shopListService.deleteList(listId: docId);
+    if(success) getAllLists(true);
+    return success;
   }
 
-  void deleteItem({required ItemModel item, required ShopListModel list}){
-    shopList.map((e){
-      if(e == list){
-        e.products!.remove(item);
-      }
-    }).toList();
-    saveMyListsLocally();
-    notifyListeners();
+  Future<bool> updateShopList(ShopListModel data) async {
+    bool success = await shopListService.updateList(data);
+    if (success) getList(data.id!);
+    return success;
   }
 
-  void getLocallyLists() async {
-    print("Pegando lista local");
-    var shopList = await _preferencesDB.getMyLists();
-    notifyListeners();
+
+  Future<bool> deleteItem({required String listId, required ItemModel item}) async {
+    bool success = await shopListService.deleteItemFromList(item: item, listId: listId);
+    if (success) getList(listId);
+    return success;
+  }
+
+  Future<bool> addItem({required String listId, required ItemModel item}) async {
+    bool success = await shopListService.addItemToList(item: item, listId: listId);
+    if (success) getList(listId);
+    return success;
+  }
+
+  Future<bool> updateItem({required String listId, required List<ItemModel> itens}) async {
+    
+    bool success = await shopListService.updateItem(listId: listId, itens: itens);
+    
+    if (success) getList(listId);
+
+    return success;
+  }
+
+  void dispose(){
+    shopLists.close();
+    listData.close();
   }
 
 }

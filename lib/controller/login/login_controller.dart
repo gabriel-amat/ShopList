@@ -4,8 +4,8 @@ import 'package:rxdart/rxdart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shop_list/models/user/user_credential_result.dart';
 import 'package:shop_list/models/user/user_model.dart';
-import 'package:shop_list/service/firebase_user.dart';
-import 'package:shop_list/shared/login_validator.dart';
+import 'package:shop_list/service/user_service.dart';
+import 'package:shop_list/shared/helper/login_validator.dart';
 import 'package:shop_list/shared/preferences.dart';
 import 'button_state.dart';
 import 'field_state.dart';
@@ -15,7 +15,7 @@ import 'user_photo_state.dart';
 
 class LoginController with LoginValidator{
 
-  final firebaseUser = FirebaseUser();
+  final firebaseUser = UserService();
 
   var userData = BehaviorSubject<UserModel?>();
   Stream<UserModel?> get outUserData => userData.stream;
@@ -62,16 +62,12 @@ class LoginController with LoginValidator{
     );
 
 
-  Future<bool> resetPassword() async{
-    bool result = false;
-    if(userData.value!.email != null){
-      await firebaseUser.resetPassword(email: userData.value!.email!);
-      result = true;
-    }
-    return result;
+  //Functions
+  Future<bool> resetPassword(String email) async{
+    return await firebaseUser.resetPassword(email: email);
   }
 
-  void getCurrentUser() async{
+  Future<void> getCurrentUser() async{
     User? _currentUser =  firebaseUser.getUser();
     bool? _anonymousLogin = await MySharedPreferences.getAnonymousLogin();
 
@@ -109,14 +105,13 @@ class LoginController with LoginValidator{
 
       if(!_success){
         User userLogged = _user.user!.user!;
-        var _id = await MySharedPreferences.getUserId();
         UserModel _userModel = UserModel(
           name: userLogged.displayName,
           celular: userLogged.phoneNumber,
           email: userLogged.email,
           photo: userLogged.photoURL,
         );
-        await firebaseUser.saveUserData(_userModel.toJson(), _id);
+        await firebaseUser.saveUserData(_userModel, _user.user!.user!.uid);
         await loadUserData(needToUpdate: true);
       }
       loginState.add(LoginState(stateLogin.LOGGED));
@@ -147,7 +142,7 @@ class LoginController with LoginValidator{
       userModel.id = _res.user!.user!.uid;
 
       bool _success = await firebaseUser.saveUserData(
-        userModel.toJson(),
+        userModel,
         _res.user!.user!.uid
       );
 

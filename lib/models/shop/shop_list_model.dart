@@ -1,6 +1,11 @@
-import 'dart:convert';
+import 'package:json_annotation/json_annotation.dart';
 import 'package:shop_list/models/shop/item_model.dart';
 
+part 'shop_list_model.g.dart';
+
+@JsonSerializable(
+  explicitToJson: true
+)
 class ShopListModel{
 
   String? id;
@@ -12,32 +17,10 @@ class ShopListModel{
     this.name,
     this.products});
 
-  factory ShopListModel.fromJson({required Map<String, dynamic> json, required String id}){
-    return ShopListModel(
-      name: json['name'],
-      id: id,
-      products: List<ItemModel>.from(json['products'].map((e) =>
-          ItemModel.fromJson(e)).toList())
+  factory ShopListModel.fromJson(Map<String, dynamic> json, String id)
+    => _$ShopListModelFromJson(json)..id = id;
 
-    );
-  }
-
-  Map<String, dynamic> toJson(ShopListModel shop) => {
-    'id': shop.id,
-    'name': shop.name,
-    'products': shop.products != null
-        ? shop.products!.map((e) => e.toJson(e)).toList() : [],
-  };
-
-  static String encode(List<ShopListModel> shop) =>
-    json.encode(shop.map<Map<String, dynamic>>(
-      (item) => ShopListModel().toJson(item)
-    ).toList(),
-  );
-
-  static List<ShopListModel> decode(String shopLists) =>
-    (json.decode(shopLists) as List<dynamic>)
-        .map((item) => ShopListModel.fromJson(json: item, id: item['id']))
-        .toList();
+  Map<String, dynamic> toJson()
+    => _$ShopListModelToJson(this);
 
 }

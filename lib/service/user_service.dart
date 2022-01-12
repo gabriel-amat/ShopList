@@ -1,15 +1,14 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shop_list/models/user/user_credential_result.dart';
 import 'package:shop_list/models/user/user_model.dart';
-import 'package:shop_list/shared/handle_errors.dart';
+import 'package:shop_list/shared/helper/handle_errors.dart';
 import 'package:shop_list/shared/preferences.dart';
 
 
-class FirebaseUser with ChangeNotifier{
+class UserService{
 
 
   final _auth = FirebaseAuth.instance;
@@ -85,16 +84,14 @@ class FirebaseUser with ChangeNotifier{
     }
   }
 
-  Future<bool> saveUserData(Map<String, dynamic> data, String id) async{
-    bool result = false;
-
-    await _db.collection("users").doc(id).set(data)
-      .then((resp){
-        result = true;
-      }).catchError((err){
-        print("Erro ao salvar dados: $err");
-      });
-    return result;
+  Future<bool> saveUserData(UserModel user, String id) async{
+    try{
+       await _db.collection("users").doc(id).set(user.toJson());
+       return true;
+    } catch (e){
+      print("Erro ao salvar dados do user $e");
+      return false;
+    }
   }
 
   Future<bool> updateUserData({required Map<String, dynamic> data}) async{

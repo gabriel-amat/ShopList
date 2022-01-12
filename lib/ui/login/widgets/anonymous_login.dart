@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shop_list/controller/login/login_controller.dart';
-import 'package:shop_list/shared/app_colors.dart';
-import 'package:shop_list/shared/app_text_style.dart';
-import 'package:shop_list/shared/preferences.dart';
+import 'package:shop_list/shared/theme/app_colors.dart';
+import 'package:shop_list/shared/theme/app_text_style.dart';
 import 'package:shop_list/ui/home/home_screen.dart';
 
 class AnonymousLogin extends StatelessWidget {

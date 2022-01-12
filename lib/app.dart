@@ -18,8 +18,9 @@ class App extends StatelessWidget {
           create: (_) => LoginController(),
           dispose: (_, value) => value.dispose(),
         ),
-        ChangeNotifierProvider<ShopListController>(
+        Provider<ShopListController>(
           create: (_) => ShopListController(),
+          dispose: (_, value) => value.dispose(),
         ),
       ],
       child: MaterialApp(

@@ -4,8 +4,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shop_list/controller/login/login_controller.dart';
 import 'package:shop_list/controller/login/login_state.dart';
 import 'package:shop_list/models/user/user_model.dart';
-import 'package:shop_list/shared/app_colors.dart';
-import 'package:shop_list/shared/notifications.dart';
+import 'package:shop_list/shared/theme/app_colors.dart';
+import 'package:shop_list/shared/widget/notifications.dart';
 import 'package:shop_list/ui/home/home_screen.dart';
 
 class SignUpPage extends StatefulWidget {

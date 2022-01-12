@@ -14,7 +14,7 @@ class MySharedPreferences{
   }
 
   //GETERS
-  static Future getUserId() async{
+  static Future<String?> getUserId() async{
     SharedPreferences idFirebase = await SharedPreferences.getInstance();
     return idFirebase.getString("userId");
   }

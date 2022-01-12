@@ -1,7 +1,7 @@
 import 'package:asuka/asuka.dart' as asuka;
 import 'package:flutter/material.dart';
 
-import 'app_colors.dart';
+import '../theme/app_colors.dart';
 
 class CustomNotification{
 

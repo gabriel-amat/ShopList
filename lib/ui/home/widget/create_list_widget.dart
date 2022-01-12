@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:shop_list/controller/login/login_controller.dart';
 import 'package:shop_list/controller/shop_list_controller.dart';
 import 'package:provider/provider.dart';
+import 'package:shop_list/models/shop/shop_list_model.dart';
+import 'package:shop_list/shared/widget/notifications.dart';
 
 class CreateListWidget extends StatefulWidget {
   @override
@@ -9,26 +10,30 @@ class CreateListWidget extends StatefulWidget {
 }
 class _CreateListWidgetState extends State<CreateListWidget> {
 
+  final notification = CustomNotification();
   ShopListController? _shopListController;
-  LoginController? _loginController;
   final _title = TextEditingController();
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     _shopListController = context.read<ShopListController>();
-    _loginController = context.read<LoginController>();
     super.initState();
   }
 
-  void onAddTap(){
+  Future<void> onAddTap() async {
     if(_formKey.currentState!.validate()){
-      _shopListController!.createShopList(
-        title: _title.text,
-        loginController: _loginController!
+      
+      var _data = ShopListModel(
+        name: _title.text
       );
+      
+      bool success = await _shopListController!.createList(_data);
 
-      setState((){});
+      if(!success){
+        notification.showSnackErrorWithIcon(text: "Erro ao criar lista");
+      }
+
       _title.clear();
       FocusScope.of(context).unfocus();
     }

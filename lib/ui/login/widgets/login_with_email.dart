@@ -4,6 +4,7 @@ import 'package:shop_list/controller/login/button_state.dart';
 import 'package:shop_list/controller/login/field_state.dart';
 import 'package:shop_list/controller/login/login_controller.dart';
 import 'package:provider/provider.dart';
+import 'package:shop_list/shared/theme/app_text_style.dart';
 
 class LoginWithEmail extends StatefulWidget {
   @override
@@ -41,6 +42,7 @@ class _LoginWithEmailState extends State<LoginWithEmail> {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.max,
           children: [
+            //Email
             StreamBuilder<FieldState>(
               stream: _loginController!.outEmail,
               initialData: FieldState(),
@@ -100,6 +102,16 @@ class _LoginWithEmailState extends State<LoginWithEmail> {
                   ),
                 );
               },
+            ),
+            //Reset password
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                style: TextButton.styleFrom(primary: Colors.blue[800]),
+                child:
+                    Text("Esqueci minha senha", style: AppTextStyle.normalText),
+                onPressed: () {},
+              ),
             ),
             // LoginButton
             StreamBuilder<ButtonState>(

@@ -1,5 +1,8 @@
-import 'dart:convert';
+import 'package:json_annotation/json_annotation.dart';
 
+part 'item_model.g.dart';
+
+@JsonSerializable()
 class ItemModel{
 
   String? id;
@@ -9,29 +12,12 @@ class ItemModel{
   ItemModel({
     this.id,
     this.checked = false,
-    this.name,});
+    this.name});
 
-  factory ItemModel.fromJson(Map<String, dynamic> json){
-    return ItemModel(
-        name: json['name'],
-        id: json['id'],
-        checked: json['checked'],
-    );
-  }
+  factory ItemModel.fromJson(Map<String, dynamic> json)
+    => _$ItemModelFromJson(json);
 
-  Map<String, dynamic> toJson(ItemModel item) => {
-    'id': item.id,
-    'name': item.name,
-    'checked': item.checked,
-  };
-
-  static String encode(List<ItemModel> item) =>
-    json.encode(item.map<Map<String, dynamic>>(
-      (item) => ItemModel().toJson(item)).toList());
-
-  static List<ItemModel> decode(String item) =>
-    (json.decode(item) as List<dynamic>)
-      .map<ItemModel>((item) => ItemModel.fromJson(item))
-      .toList();
+  Map<String, dynamic> toJson()
+    => _$ItemModelToJson(this);
 
 }

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:shop_list/controller/login/login_controller.dart';
-import 'package:shop_list/shared/app_colors.dart';
-import 'package:shop_list/shared/app_text_style.dart';
+import 'package:shop_list/shared/theme/app_colors.dart';
+import 'package:shop_list/shared/theme/app_text_style.dart';
 
 class GoogleButton extends StatelessWidget {
 
@@ -27,7 +28,7 @@ class GoogleButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            FlutterLogo(),
+            FaIcon(FontAwesomeIcons.google, color: Colors.grey,),
             Expanded(
               child: Center(
                 child: Text("Entrar com Google",

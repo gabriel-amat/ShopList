@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:shop_list/controller/login/login_controller.dart';
+import 'package:shop_list/controller/login/login_state.dart';
 import 'package:shop_list/ui/home/widget/custom_drawer_header.dart';
 import 'package:shop_list/ui/home/widget/drawer_item.dart';
 import 'package:shop_list/ui/login/login_screen.dart';
@@ -21,20 +22,31 @@ class CustomDrawer extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               CustomDrawerHeader(),
-              DrawerItem(
-                title: 'Sair',
-                icon: FaIcon(
-                  FontAwesomeIcons.signOutAlt,
-                ),
-                onTap: () async {
-                  bool _success = await loginController.logOut();
-                  if (_success) {
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder:(context)=>LoginScreen()),
-                      (route) => false,
-                    );
+              StreamBuilder<LoginState>(
+                stream: loginController.outLoginState,
+                builder: (context, state) {
+                  if(state.hasData){
+                    if(state.data!.state == stateLogin.LOGGED){
+                      return DrawerItem(
+                        title: 'Sair',
+                        icon: FaIcon(
+                          FontAwesomeIcons.signOutAlt,
+                        ),
+                        onTap: () async {
+                          bool _success = await loginController.logOut();
+                          if (_success) {
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                  builder: (context) => LoginScreen()),
+                              (route) => false,
+                            );
+                          }
+                        },
+                      );
+                    }
                   }
-                },
+                  return Container();
+                }
               )
             ],
           ),

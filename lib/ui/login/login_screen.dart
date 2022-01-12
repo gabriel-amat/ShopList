@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shop_list/controller/login/login_controller.dart';
 import 'package:shop_list/controller/login/login_state.dart';
-import 'package:shop_list/shared/app_text_style.dart';
+import 'package:shop_list/shared/theme/app_text_style.dart';
+import 'package:shop_list/shared/widget/notifications.dart';
 import 'package:shop_list/ui/home/home_screen.dart';
-import 'package:shop_list/ui/login/widgets/anonymous_login.dart';
 import 'package:shop_list/ui/login/widgets/email_button.dart';
 import 'signUp_page.dart';
 import 'widgets/google_button.dart';
@@ -22,6 +22,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
 
+  final notification = CustomNotification();
   LoginController? _loginController;
   StreamSubscription? _loginStateSub;
   bool seePass = true;
@@ -75,6 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
           break;
         case stateLogin.ANONYMOUS:
           if (mounted) {
+            notification.showSnackSuccessWithIcon(text: "Entrando no modo anonimo");
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(builder: (context) => HomeScreen()),
               (Route<dynamic> route) => false,
@@ -149,31 +151,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(
-                    height: 16,
-                  ),
-                  AnonymousLogin(controller: _loginController!),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 22),
-                    child: Divider(thickness: 0.8,),
-                  ),
+                  // AnonymousLogin(controller: _loginController!),
+                  // Padding(
+                  //   padding: const EdgeInsets.symmetric(vertical: 22),
+                  //   child: Divider(thickness: 0.8,),
+                  // ),
                   GoogleButton(controller: _loginController!),
-                  SizedBox(
-                    height: 16,
-                  ),
+                  const SizedBox(height: 16),
                   EmailButton(controller: _loginController!),
-                  SizedBox(
-                    height: 22,
-                  ),
-                  //Reset password
-                  TextButton(
-                    style: TextButton.styleFrom(primary: Colors.blue[800]),
-                    child: Text(
-                      "Esqueci minha senha",
-                      style: AppTextStyle.normalText
-                    ),
-                    onPressed: () {},
-                  ),
+                  const SizedBox(height: 22),
                   //Create account
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,

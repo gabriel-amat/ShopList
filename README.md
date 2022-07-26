@@ -1,6 +1,6 @@
 # ShopList
 
-Um app para você criar sua lista de compras e ainda compartilhar com os amigos e familia!!
+An app for you to create your shopping list and share it with friends and family!!
 
 <h3> * Dynamic links</h3>  
 <h3> * Login with Google or email & pass</h3>  

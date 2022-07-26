@@ -16,6 +16,8 @@ An app for you to create your shopping list and share it with friends and family
 <div>
   <img src ="https://user-images.githubusercontent.com/54670983/181019607-3a6172e0-9813-4473-b845-6d69a958f513.jpg" width="200" height="400">
   <img src ="https://user-images.githubusercontent.com/54670983/181019578-a56eafa2-5303-4281-8fd4-68392d320e4f.jpg" width="200" height="400">
+  <img src ="https://user-images.githubusercontent.com/54670983/181021877-0b7bc4fd-898d-4b9c-84d7-5af82d95ecf1.jpg" width="200" height="400">
+  <img src ="https://user-images.githubusercontent.com/54670983/181022038-d17b6010-c2e5-4860-b6d4-09f23709fc07.jpg" width="200" height="400">
 </div>
 
 <h3 align="center">I'm a mobile developer</h3>

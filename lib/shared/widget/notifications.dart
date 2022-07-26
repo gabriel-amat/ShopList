@@ -1,222 +1,224 @@
-import 'package:asuka/asuka.dart' as asuka;
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:shop_list/controller/share_controller.dart';
+import 'package:shop_list/shared/constants.dart';
 
-import '../theme/app_colors.dart';
-
-class CustomNotification{
-
-  void showFCMNotifications({required BuildContext context, required String body, required String title}){
-    asuka.showDialog(
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10)
-        ),
-        title: Text(title,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w400,
-            color: AppColors.textColor
-          ),
-        ),
-        content: Text(body,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w400,
-            color: AppColors.textColor
-          ),
-        ),
-        actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)
-              ),
-              primary: AppColors.textColor,
-            ),
-            onPressed: (){
-              Navigator.of(context, rootNavigator: true).pop();
-            },
-            child: Text("Fechar",
-              style: TextStyle(
-                  color: Colors.white
-              ),
-            ),
-          ),
-        ],
-      )
+class CustomNotification {
+  void showFCMNotifications({
+    required BuildContext context,
+    required String body,
+    required String title,
+  }) {
+    Get.defaultDialog(
+      title: title,
+      content: Text(body),
+      radius: 10,
+      actions: [
+        TextButton(
+          onPressed: () {
+            Get.back();
+          },
+          child: Text("Ok"),
+        )
+      ],
     );
   }
 
-  void showDialogWaring({required BuildContext context, required String text, Widget? page, required String buttonText}){
-    asuka.showDialog(
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10)
-        ),
-        title: Icon(Icons.error, color: Colors.yellow, size: 45,),
-        content: Text(text,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w300
-          ), 
-        ),
-        actions: [
-          TextButton(
-            style: TextButton.styleFrom(
-              primary: Colors.blue,
-            ),
-            onPressed: (){
-              Navigator.of(context, rootNavigator: true).pop();
-            },
-            child: Text("Fechar"),
-          ),
-          page != null ? ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              primary: Colors.blue
-            ),
-            onPressed: (){
-              Navigator.of(context).push(
-                MaterialPageRoute(builder:(context)=>page)
-              );
-            },
-            child: Text(buttonText,
-              style: TextStyle(
-                color: Colors.white
-              ),
-            ),
-          ) : Container()
-        ],
-      )
-    );
-  }
+  void cancel() => Get.closeCurrentSnackbar();
 
-  void showSnackErrorWithIcon({required String text, IconData? icon, int? durationInSeconds}){
+  void error({required String text, int? duration}) {
+    if (Get.isSnackbarOpen) Get.closeCurrentSnackbar();
 
-    asuka.removeCurrentSnackBar();
-    
-    asuka.showSnackBar(SnackBar(
-      behavior: SnackBarBehavior.floating,
-      duration: Duration(seconds: durationInSeconds ?? 3),
+    Get.snackbar(
+      "Oops",
+      text,
+      margin: const EdgeInsets.all(16),
+      duration: Duration(seconds: duration ?? 3),
       backgroundColor: Colors.red,
-      margin: EdgeInsets.all(16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10)
+      colorText: Colors.white,
+      borderRadius: 10,
+      icon: Icon(
+        Icons.error,
+        size: 30,
+        color: Colors.white,
       ),
-      content: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Icon(icon ?? Icons.error, size: 30, color: Colors.white,),
-          SizedBox(width: 8,),
-          Flexible(
-            child: Text(text,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w300,
-                color: Colors.white
-              ),
-            ),
-          ),
-        ],
-      ),
-    ));
+    );
   }
 
-  void showSnackSuccessWithIcon({required String text, IconData? icon}){
-    
-    asuka.removeCurrentSnackBar();
+  void success({required String text, IconData? icon, int? duration}) {
+    if (Get.isSnackbarOpen) Get.closeCurrentSnackbar();
 
-    asuka.showSnackBar(SnackBar(
-      behavior: SnackBarBehavior.floating,
-      duration: Duration(seconds: 2),
+    Get.snackbar(
+      "Nice",
+      text,
+      duration: Duration(seconds: duration ?? 3),
       backgroundColor: Colors.green,
-      margin: EdgeInsets.all(16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10)
+      margin: const EdgeInsets.all(16),
+      colorText: Colors.white,
+      borderRadius: 10,
+      icon: Icon(
+        Icons.check_circle,
+        size: 30,
+        color: Colors.white,
       ),
-      content: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Icon(icon ?? Icons.check_circle, size: 30, color: Colors.white,),
-          SizedBox(width: 8,),
-          Flexible(
-            child: Text(text,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w300,
-                color: Colors.white
-              ),
-            ),
-          ),
-        ],
-      ),
-    ));
+    );
   }
 
-  void showLoadingSnack({required String text}){
-    
-    asuka.removeCurrentSnackBar();
+  void warning({required String text, IconData? icon, int? duration}) {
+    if (Get.isSnackbarOpen) Get.closeCurrentSnackbar();
 
-    asuka.showSnackBar(SnackBar(
-      behavior: SnackBarBehavior.floating,
-      duration: Duration(seconds: 2),
-      backgroundColor: Colors.yellow[800],
-      margin: EdgeInsets.all(16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10)
+    Get.snackbar(
+      "Aviso",
+      text,
+      duration: Duration(seconds: duration ?? 3),
+      backgroundColor: Colors.orange,
+      margin: const EdgeInsets.all(16),
+      colorText: Colors.white,
+      borderRadius: 10,
+      icon: Icon(
+        Icons.warning_amber_rounded,
+        size: 30,
+        color: Colors.white,
       ),
-      content: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-          ),
-          SizedBox(width: 8,),
-          Flexible(
-            child: Text(text,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w300,
-                color: Colors.white
-              ),
-            ),
-          ),
-        ],
-      ),
-    ));
+    );
   }
 
-  void showSnackWarning({required String text}){
-    
-    asuka.removeCurrentSnackBar();
+  void loading({required String text, IconData? icon}) {
+    if (Get.isSnackbarOpen) Get.closeCurrentSnackbar();
 
-    asuka.showSnackBar(SnackBar(
-      behavior: SnackBarBehavior.floating,
-      duration: Duration(seconds: 2),
-      backgroundColor: AppColors.textColor,
-      margin: EdgeInsets.all(16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10)
-      ),
-      content: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Icon(Icons.error, size: 30, color: Colors.white,),
-          SizedBox(width: 8,),
-          Flexible(
-            child: Text(text,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w300,
-                color: Colors.white
-              ),
-            ),
-          ),
-        ],
-      ),
-    ));
+    Get.snackbar(
+      "Aguarde um instante",
+      "Carregando",
+      margin: const EdgeInsets.all(16),
+      backgroundColor: Colors.orange,
+      showProgressIndicator: true,
+      progressIndicatorValueColor: AlwaysStoppedAnimation<Color>(secondColor),
+      progressIndicatorBackgroundColor: thirdColor,
+      colorText: Colors.white,
+      borderRadius: 10,
+    );
   }
 
+  void receiveLinkDialog(Map<String, dynamic> parameters) {
+    var shareController = Get.find<ShareController>();
+
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            parameters["thumb"] == ""
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Text(
+                        parameters["listTitle"]!,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                    ),
+                  )
+                : Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    height: 75,
+                    width: double.maxFinite,
+                    child: Stack(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(10),
+                            topRight: Radius.circular(10),
+                          ),
+                          child: Image.network(
+                            parameters["thumb"]!,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 5,
+                          left: 5,
+                          child: Text(
+                            parameters["listTitle"]!,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+              ),
+              child: Text(
+                "${parameters["listCreatorName"]} convidou você para entrar nesta lista!",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w300,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  InkWell(
+                    onTap: () {
+                      Get.back();
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.red, width: 2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.all(8),
+                      child: Text(
+                        "Cancelar",
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () async {
+                      Get.back();
+                      await shareController.enterListAsPendingUser(
+                        parameters["listID"]!,
+                      );
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.green, width: 2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.all(8),
+                      child: Text(
+                        "Entrar",
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
 }

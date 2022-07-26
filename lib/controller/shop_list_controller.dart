@@ -1,89 +1,143 @@
-import 'package:rxdart/rxdart.dart';
+import 'package:get/get.dart';
+import 'package:shop_list/controller/login_controller.dart';
+import 'package:shop_list/models/file_picked_model.dart';
 import 'package:shop_list/models/shop/item_model.dart';
 import 'package:shop_list/models/shop/shop_list_model.dart';
+import 'package:shop_list/models/user/user_model.dart';
 import 'package:shop_list/service/shopList_service.dart';
+import 'package:shop_list/shared/preferences.dart';
+import 'package:shop_list/shared/widget/notifications.dart';
 
-class ShopListController{
+class ShopListController extends GetxController {
+  final listService = ShopListService();
+  final snack = CustomNotification();
 
-  final shopListService = ShopListService();
+  FilePickedModel? thumb;
+  RxList<ShopListModel> shopLists = RxList();
+  RxList<ShopListModel> sharedShopLists = RxList();
 
-  var shopLists = BehaviorSubject<List<ShopListModel>?>();
-  Stream<List<ShopListModel>?> get outShopLists => shopLists.stream;
-
-  var listData = BehaviorSubject<ShopListModel?>();
-  Stream<ShopListModel?> get outList => listData.stream;
-
-
-  //Functions
-  Future<void> getAllLists(bool update) async {
-    if(!shopLists.hasValue || update){
-      shopLists.add(await shopListService.getAllLists());
-    }
+  @override
+  onReady() {
+    getLists();
+    super.onReady();
   }
 
-  Future<void> getList(String id) async{
-    ShopListModel? _list = await shopListService.getList(id);
+  @override
+  onClose() {
+    shopLists.close();
+    sharedShopLists.close();
+    super.onClose();
+  }
 
-    if(_list != null && _list.products != null && _list.products!.isNotEmpty){
-      List<ItemModel> _itensChecked = [];
-      _list.products!.map((e){
-        if(e.checked!){
-          _itensChecked.add(e);
-        }
-      }).toList();
-      //Remover os itens checked que estao em ordem aleatorio
-      _list.products!.removeWhere((e) => _itensChecked.contains(e));
-      //Adiciona no final da lista
-      var _newList = _list.products!.followedBy(_itensChecked).toList();
-      _list.products = List.from(_newList);
+  bool amICreator(ShopListModel list, String userId) {
+    return list.creatorId == userId;
+  }
+
+  Future<void> getLists() async {
+    shopLists.clear();
+    sharedShopLists.clear();
+
+    var userId = await MySharedPreferences.getUserId();
+
+    if (userId == null) {
+      snack.error(text: "Erro ao acessar dados do usuario.");
+      return;
     }
+    print("Shop lists $shopLists");
+    shopLists.bindStream(listService.listStream(userId));
+    sharedShopLists.bindStream(listService.sharedListStream(userId));
+  }
 
-    listData.add(_list);
+  Future<List<ItemModel>> reorderCheckedItens(List<ItemModel> list) async {
+    List<ItemModel> _itensChecked = [];
+
+    list.map((e) {
+      if (e.checked!) {
+        _itensChecked.add(e);
+      }
+    }).toList();
+
+    //Remover os itens checked que estao em ordem aleatorio
+    list.removeWhere((e) => _itensChecked.contains(e));
+
+    //Adiciona no final da lista de produtos
+    var _newList = list.followedBy(_itensChecked).toList();
+    //add a nova lista de produtos na ordem certa
+    list = List.from(_newList);
+
+    return list;
   }
 
   Future<bool> createList(ShopListModel list) async {
-    bool success = await shopListService.createList(data: list);
-    if(success) getAllLists(true);
+    final loginController = Get.find<LoginController>();
+
+    final UserModel? user = loginController.userData.value;
+
+    if (user == null) return false;
+
+    list.creator = user;
+    list.creatorId = user.id;
+
+    bool success = await listService.createList(data: list, thumb: thumb);
+    shopLists.refresh();
     return success;
   }
 
-  Future<bool> deleteShopList(String docId) async {
-    bool success = await shopListService.deleteList(listId: docId);
-    if(success) getAllLists(true);
-    return success;
+  Future<bool> deleteShopList(ShopListModel list) async {
+    return await listService.deleteList(list: list);
   }
 
-  Future<bool> updateShopList(ShopListModel data) async {
-    bool success = await shopListService.updateList(data);
-    if (success) getList(data.id!);
-    return success;
-  }
+  Future<bool> updateShopList(ShopListModel newValue) async {
+    bool success = await listService.updateList(newValue, thumb: thumb);
 
-
-  Future<bool> deleteItem({required String listId, required ItemModel item}) async {
-    bool success = await shopListService.deleteItemFromList(item: item, listId: listId);
-    if (success) getList(listId);
-    return success;
-  }
-
-  Future<bool> addItem({required String listId, required ItemModel item}) async {
-    bool success = await shopListService.addItemToList(item: item, listId: listId);
-    if (success) getList(listId);
-    return success;
-  }
-
-  Future<bool> updateItem({required String listId, required List<ItemModel> itens}) async {
-    
-    bool success = await shopListService.updateItem(listId: listId, itens: itens);
-    
-    if (success) getList(listId);
+    for (ShopListModel item in shopLists) {
+      if (item.id == newValue.id) {
+        item = newValue;
+        break;
+      }
+    }
+    shopLists.refresh();
 
     return success;
   }
 
-  void dispose(){
-    shopLists.close();
-    listData.close();
+  Future<bool> deleteItem({
+    required String listId,
+    required ItemModel item,
+  }) async {
+    bool success = await listService.deleteItemFromList(
+      item: item,
+      listId: listId,
+    );
+    return success;
   }
 
+  Future<bool> addItem({
+    required String listId,
+    required ItemModel item,
+  }) async {
+    bool success = await listService.addItemToList(
+      item: item,
+      listId: listId,
+    );
+    return success;
+  }
+
+  Future<bool> updateItem({
+    required String listId,
+    required List<ItemModel> itens,
+  }) async {
+    String? user = await MySharedPreferences.getUserId();
+
+    if (user == null) {
+      snack.error(text: "Erro ao atualizar dados do item, usuario sem ID");
+      return false;
+    }
+
+    return await listService.updateItem(
+      listId: listId,
+      itens: itens,
+      userId: user,
+    );
+  }
 }

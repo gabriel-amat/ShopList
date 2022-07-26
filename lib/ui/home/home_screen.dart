@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:shop_list/controller/login/login_controller.dart';
+import 'package:get/get.dart';
+import 'package:shop_list/controller/login_controller.dart';
 import 'package:shop_list/controller/shop_list_controller.dart';
-import 'package:shop_list/models/shop/shop_list_model.dart';
-import 'package:shop_list/shared/theme/app_text_style.dart';
+import 'package:shop_list/shared/constants.dart';
 import 'package:shop_list/shared/widget/user_photo.dart';
-import 'package:shop_list/ui/home/widget/custom_drawer.dart';
-import 'package:shop_list/ui/home/widget/list_item.dart';
+import 'package:shop_list/ui/home/drawer/custom_drawer.dart';
+import 'package:shop_list/ui/home/widget/my_shopLists_widget.dart';
+import 'package:shop_list/ui/home/widget/shared_shopLists_widget.dart';
 import 'widget/create_list_widget.dart';
-import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -15,37 +15,41 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
-  LoginController? loginController;
-  ShopListController? shopListController;
+  final loginController = Get.find<LoginController>();
+  final shopListController = Get.put(ShopListController());
   GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  late PageController pageController;
+  bool myList = true;
 
   @override
   void initState() {
-    super.initState();
-    shopListController = context.read<ShopListController>();
-    loginController = context.read<LoginController>();
-    _getData();
-  }
-
-  void _getData() async {
-    shopListController!.getAllLists(true);
-  }
-
-  Widget _emptyList(){
-    return Center(
-      child: Column(
-        children: [
-          Icon(Icons.list_rounded, size: 50, color: Colors.grey,),
-          const SizedBox(height: 5),
-          Text("Você ainda não tem nenhuma lista",
-            style: TextStyle(
-              fontWeight: FontWeight.w300
-            ),
-          )
-        ],
-      ),
+    pageController = PageController(
+      initialPage: 0,
+      keepPage: true,
     );
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    pageController.dispose();
+  }
+
+  void onPageChanged(int index) {
+    pageController.animateToPage(
+      index,
+      duration: Duration(milliseconds: 500),
+      curve: Curves.ease,
+    );
+
+    if (index == 0) {
+      myList = true;
+    } else {
+      myList = false;
+    }
+
+    setState(() {});
   }
 
   @override
@@ -59,46 +63,105 @@ class _HomeScreenState extends State<HomeScreen> {
             _scaffoldKey.currentState!.openDrawer();
           },
           icon: Icon(
-            Icons.menu,
+            Icons.menu_rounded,
             color: Colors.black,
           ),
         ),
         elevation: 0,
         backgroundColor: Colors.transparent,
-        actions: [
-          UserPhotoWidget()
-        ],
+        title: Text("ShopList", 
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        centerTitle: true,
+        actions: [UserPhotoWidget()],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Flexible(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Listas de compras", style: AppTextStyle.title),
-                  SizedBox(height: 16,),
-                  Flexible(
-                    fit: FlexFit.loose,
-                    child: StreamBuilder<List<ShopListModel>?>(
-                      stream: shopListController!.outShopLists,
-                      builder: (_, list){
-                        if(list.hasData && list.data!.isNotEmpty){
-                          return ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: list.data!.length,
-                            itemBuilder: (context, index) {
-                              return ListItem(list: list.data![index]);
-                            },
-                          );
-                        }
-                        return _emptyList();
-                      },
+          Padding(
+            padding: const EdgeInsets.all(22),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Flexible(
+                  flex: 1,
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        onPageChanged(0);
+                      });
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: myList ? thirdColor : Colors.transparent,
+                        border: myList
+                            ? null
+                            : Border.all(color: Colors.grey, width: 0.8),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 12,
+                      ),
+                      child: Text(
+                        "Minhas listas",
+                        style: TextStyle(
+                            color: myList ? Colors.white : Colors.grey,
+                            fontWeight: FontWeight.bold),
+                      ),
                     ),
                   ),
+                ),
+                const SizedBox(width: 16),
+                Flexible(
+                  flex: 1,
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        onPageChanged(1);
+                      });
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: !myList ? thirdColor : Colors.transparent,
+                        border: !myList
+                            ? null
+                            : Border.all(color: Colors.grey, width: 0.8),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 12,
+                      ),
+                      child: Text(
+                        "Listas compartilhadas",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: !myList ? Colors.white : Colors.grey,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ),
+          Flexible(
+            flex: 1,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: PageView(
+                controller: pageController,
+                onPageChanged: onPageChanged,
+                children: [
+                  MyShopListsWidget(),
+                  SharedShopListsWidget(),
                 ],
               ),
             ),

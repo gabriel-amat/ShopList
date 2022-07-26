@@ -2,48 +2,52 @@ import 'package:flutter/material.dart';
 import 'package:shop_list/controller/shop_list_controller.dart';
 import 'package:shop_list/models/shop/item_model.dart';
 import 'package:shop_list/models/shop/shop_list_model.dart';
+import 'package:shop_list/shared/constants.dart';
 import 'package:shop_list/shared/widget/notifications.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
-class ProductItem extends StatelessWidget {
-
+class ProductItem extends StatefulWidget {
   final ShopListModel listData;
   final ItemModel item;
   final ShopListController controller;
-  final notification = CustomNotification();
+  final Function(ItemModel) onDelete;
 
-  ProductItem({ 
+  ProductItem({
     required this.listData,
     required this.controller,
-    required this.item});
+    required this.item,
+    required this.onDelete,
+  });
 
+  @override
+  State<ProductItem> createState() => _ProductItemState();
+}
 
-  Future<void> deleteItem() async {
-    bool success = await controller.deleteItem(
-      item: item,
-      listId: listData.id!,
-    );
-
-    if(!success){
-      notification.showSnackErrorWithIcon(text: "Ero ao deletar item, se persistir contate um adminstrador");
-    }
-  }
+class _ProductItemState extends State<ProductItem> {
+  final notification = CustomNotification();
 
   void checkItem(bool check) async {
+    print("===================================");
+    print("Check item with value => $check");
+    print("Item id ${widget.item.id}");
+    print("Item name ${widget.item.name}");
+    print("===================================");
 
-    listData.products!.map((e){
-      if(e.name == item.name){
+    setState(() => widget.item.checked = check);
+
+    widget.listData.products!.map((e){
+      if(e.id == widget.item.id){
+        print("Tem id igual");
         e.checked = check;
       }
     }).toList();
-    
-    bool success = await controller.updateItem(
-      itens: listData.products!,
-      listId: listData.id!,
+  
+    bool res = await widget.controller.updateItem(
+      itens: widget.listData.products!,
+      listId: widget.listData.id!,
     );
-
-    if (!success) {
-      notification.showSnackErrorWithIcon(text: "Ero ao atualizar item, se persistir contate um adminstrador");
+    if (!res) {
+      setState(() => widget.item.checked = check);
     }
   }
 
@@ -59,38 +63,31 @@ class ProductItem extends StatelessWidget {
           motion: BehindMotion(),
           children: [
             SlidableAction(
-              onPressed: (context) => deleteItem()
+              label: "Excluir",
+              icon: Icons.delete,
+              backgroundColor: thirdColor,
+              foregroundColor: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              onPressed: (context) => widget.onDelete(widget.item),
             )
           ],
         ),
-        child: ListTile(
+        child: CheckboxListTile(
           title: Text(
-            item.name!,
+            widget.item.name!,
             style: TextStyle(
-              decoration: item.checked!
+              decoration: widget.item.checked!
                   ? TextDecoration.lineThrough
                   : TextDecoration.none,
-              color: item.checked! ? Colors.grey : Colors.black,
+              color: widget.item.checked! ? Colors.grey : Colors.black,
               fontSize: 18,
             ),
           ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Checkbox(
-                value: item.checked,
-                activeColor: Colors.green,
-                onChanged: (bool? newValue) => checkItem(newValue!),
-              ),
-              IconButton(
-                onPressed: deleteItem,
-                icon: Icon(
-                  Icons.delete,
-                  color: Colors.red,
-                ),
-              ),
-            ],
-          ),
+          value: widget.item.checked,
+          activeColor: secondColor,
+          onChanged: (bool? value){
+            checkItem(value!);
+          },
         ),
       ),
     );

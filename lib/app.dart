@@ -1,10 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:shop_list/controller/login/login_controller.dart';
-import 'package:shop_list/controller/shop_list_controller.dart';
+import 'package:get/get.dart';
+import 'package:shop_list/shared/store_binding.dart';
 import 'package:shop_list/ui/login/login_screen.dart';
-import 'package:asuka/asuka.dart' as asuka;
 
 class App extends StatelessWidget {
 
@@ -12,27 +10,18 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        Provider<LoginController>(
-          create: (_) => LoginController(),
-          dispose: (_, value) => value.dispose(),
-        ),
-        Provider<ShopListController>(
-          create: (_) => ShopListController(),
-          dispose: (_, value) => value.dispose(),
-        ),
-      ],
-      child: MaterialApp(
+    return GetMaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'PotatoShop',
-        builder: asuka.builder,
+        title: 'ShopList',
+        initialBinding: StoreBiding(),
         home: FutureBuilder(
           future: _initialization,
           builder: (context, snapshot) {
             if (snapshot.hasError) {
-              return Center(
-                child: Text("Error"),
+              return Scaffold(
+                body: Center(
+                  child: Text("Error"),
+                ),
               );
             }
             if (snapshot.connectionState == ConnectionState.done) {
@@ -44,7 +33,6 @@ class App extends StatelessWidget {
 
           }
         ),
-      ),
-    );
+      );
   }
 }

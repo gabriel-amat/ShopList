@@ -1,31 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:shop_list/models/shop/item_model.dart';
 import 'package:shop_list/models/shop/shop_list_model.dart';
+import 'package:shop_list/shared/constants.dart';
 
 class AddItemWidget extends StatefulWidget {
-
   final ShopListModel list;
-  final Function(ItemModel) newItem;
+  final Function(ItemModel) onSubmit;
 
-  AddItemWidget({required this.list, required this.newItem});
+  AddItemWidget({required this.list, required this.onSubmit});
 
   @override
   _AddItemWidgetState createState() => _AddItemWidgetState();
 }
 
 class _AddItemWidgetState extends State<AddItemWidget> {
-
   final _name = TextEditingController();
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  void onAddTap(){
-    if(_formKey.currentState!.validate()){
-      ItemModel _newItem = ItemModel(
-          checked: false,
-          name: _name.text
-      );
+  void onAddTap() {
+    if (_formKey.currentState!.validate()) {
+      ItemModel _newItem = ItemModel(checked: false, name: _name.text);
       _name.clear();
-      widget.newItem(_newItem);
+      widget.onSubmit(_newItem);
     }
   }
 
@@ -37,7 +33,7 @@ class _AddItemWidgetState extends State<AddItemWidget> {
         color: Colors.white,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(10),
-          topRight: Radius.circular(10)
+          topRight: Radius.circular(10),
         ),
         boxShadow: [
           BoxShadow(
@@ -48,43 +44,51 @@ class _AddItemWidgetState extends State<AddItemWidget> {
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Row(
         children: [
-          Form(
-            key: _formKey,
-            child: TextFormField(
-              controller: _name,
-              validator: (value){
-                if(value!.isEmpty){
-                  return 'Digite o nome do item';
-                }else{
-                  return null;
-                }
-              },
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10)
+          Flexible(
+            child: Form(
+              key: _formKey,
+              child: SizedBox(
+                height: 45,
+                child: TextFormField(
+                  controller: _name,
+                  onFieldSubmitted: (String? value){
+                    onAddTap();
+                  },
+                  validator: (value) {
+                    if (value!.isEmpty) {
+                      return '';
+                    } else {
+                      return null;
+                    }
+                  },
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    labelText: 'Nome',
+                  ),
                 ),
-                hintText: 'Nome do item'
               ),
             ),
           ),
-          SizedBox(height: 16,),
-          Container(
-            height: 40,
-            child: ElevatedButton(
-              onPressed: onAddTap,
-              style: ElevatedButton.styleFrom(
-                primary: Colors.blue,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)
-                )
+          const SizedBox(width: 16),
+          InkWell(
+            onTap: onAddTap,
+            child: Container(
+              height: 45,
+              width: 45,
+              decoration: BoxDecoration(
+                color: primaryColor,
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: Text("Adicionar item"),
+              child: Icon(
+                Icons.add,
+                color: Colors.white,
+              ),
             ),
-          )
+          ),
         ],
       ),
     );

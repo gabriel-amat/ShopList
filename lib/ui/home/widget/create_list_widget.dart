@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:shop_list/controller/shop_list_controller.dart';
-import 'package:provider/provider.dart';
 import 'package:shop_list/models/shop/shop_list_model.dart';
+import 'package:shop_list/shared/constants.dart';
 import 'package:shop_list/shared/widget/notifications.dart';
 
 class CreateListWidget extends StatefulWidget {
@@ -11,30 +12,24 @@ class CreateListWidget extends StatefulWidget {
 class _CreateListWidgetState extends State<CreateListWidget> {
 
   final notification = CustomNotification();
-  ShopListController? _shopListController;
-  final _title = TextEditingController();
+  final shopListController = Get.find<ShopListController>();
+  final title = TextEditingController();
   GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
-  @override
-  void initState() {
-    _shopListController = context.read<ShopListController>();
-    super.initState();
-  }
 
   Future<void> onAddTap() async {
     if(_formKey.currentState!.validate()){
       
       var _data = ShopListModel(
-        name: _title.text
+        name: title.text
       );
       
-      bool success = await _shopListController!.createList(_data);
+      bool success = await shopListController.createList(_data);
 
       if(!success){
-        notification.showSnackErrorWithIcon(text: "Erro ao criar lista");
+        notification.error(text: "Erro ao criar lista");
       }
 
-      _title.clear();
+      title.clear();
       FocusScope.of(context).unfocus();
     }
   }
@@ -58,43 +53,48 @@ class _CreateListWidgetState extends State<CreateListWidget> {
           ),
         ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Row(
         children: [
-          Form(
-            key: _formKey,
-            child: TextFormField(
-              controller: _title,
-              validator: (value){
-                if(value!.isEmpty){
-                  return 'De um nome a sua lista';
-                }else{
-                  return null;
-                }
-              },
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10)
+          Flexible(
+            child: Form(
+              key: _formKey,
+              child: SizedBox(
+                height: 45,
+                child: TextFormField(
+                  controller: title,
+                  validator: (value){
+                    if(value!.isEmpty){
+                      return 'De um nome a sua lista';
+                    }else{
+                      return null;
+                    }
+                  },
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10)
+                    ),
+                    hintText: 'Crie uma nova lista...'
+                  ),
                 ),
-                hintText: 'Crie uma nova lista...'
               ),
             ),
           ),
-          SizedBox(height: 16,),
-          Container(
-            height: 40,
-            child: ElevatedButton(
-              onPressed: onAddTap,
-              style: ElevatedButton.styleFrom(
-                primary: Colors.blue,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)
-                )
+          const SizedBox(width: 16,),
+          InkWell(
+            onTap: onAddTap,
+            child: Container(
+              height: 45,
+              width: 45,
+              decoration: BoxDecoration(
+                color: primaryColor,
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: Text("Criar"),
+              child: Icon(
+                Icons.add,
+                color: Colors.white,
+              ),
             ),
-          )
+          ),
         ],
       ),
     );

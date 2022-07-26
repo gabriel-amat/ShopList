@@ -2,176 +2,227 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shop_list/models/shop/item_model.dart';
 import 'package:shop_list/models/shop/shop_list_model.dart';
 import 'package:shop_list/shared/preferences.dart';
+import 'package:shop_list/shared/widget/notifications.dart';
+import 'package:uuid/uuid.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import '../models/file_picked_model.dart';
 
-class ShopListService{
+class ShopListService {
+  final storage = FirebaseStorage.instance;
+  final _db = FirebaseFirestore.instance;
+  final snack = CustomNotification();
+  var uuid = Uuid();
 
-  var _db = FirebaseFirestore.instance;
-
-  Future<List<ShopListModel>?> getAllLists() async{
-    String? _id = await MySharedPreferences.getUserId();
-
-    if(_id != null){
-      try{
-        QuerySnapshot _snap = await _db
-          .collection("users")
-          .doc(_id)
+  Stream<List<ShopListModel>> listStream(String userId) => _db
           .collection("lists")
-          .get();
+          .where("creatorId", isEqualTo: userId)
+          .snapshots(includeMetadataChanges: true)
+          .map(
+        (event) {
+          List<ShopListModel> list = [];
+          for (var e in event.docs) {
+            final listModel = ShopListModel.fromJson(e.data());
+            list.add(listModel);
+          }
+          return list;
+        },
+      ).handleError((error) {
+        print("Error while listen lists $error");
+        return [];
+      });
 
-         return _snap.docs
-            .map((e) =>
-                ShopListModel.fromJson(e.data() as Map<String, dynamic>, e.id))
-            .toList();
-      } catch (e){
-        print("Erro ao retornar listas $e");
+  Stream<List<ShopListModel>> sharedListStream(String userId) => _db
+          .collection("lists")
+          .where("access", arrayContains: userId)
+          .snapshots(includeMetadataChanges: true)
+          .map(
+        (event) {
+          List<ShopListModel> list = [];
+          for (var e in event.docs) {
+            final listModel = ShopListModel.fromJson(e.data());
+            list.add(listModel);
+          }
+          return list;
+        },
+      ).handleError((error) {
+        print("Error while listen shared lists $error");
+        return [];
+      });
+
+  Future<bool> createList({
+    required ShopListModel data,
+    FilePickedModel? thumb,
+  }) async {
+    String? userId = await MySharedPreferences.getUserId();
+
+    if (userId == null) return false;
+
+    try {
+      final ref = _db.collection("lists").doc();
+
+      if (thumb != null) {
+        data.thumb = await saveListThumb(thumb, ref.id);
       }
+
+      data.id = ref.id;
+      await ref.set(data.toJson());
+
+      return true;
+    } catch (e) {
+      print("Erro ao criar shopList $e");
+      return false;
     }
-    return [];
   }
 
-  Future<ShopListModel?> getList(String id) async {
+  Future<bool> updateList(
+    ShopListModel data, {
+    FilePickedModel? thumb,
+  }) async {
     String? _id = await MySharedPreferences.getUserId();
 
-    if(_id != null){
+    if (_id != null) {
       try {
-        DocumentSnapshot _res = await _db
-            .collection("users")
-            .doc(_id)
-            .collection("lists")
-            .doc(id)
-            .get();
+        DocumentReference ref = _db.collection("lists").doc(data.id);
 
-        return ShopListModel.fromJson(
-            _res.data() as Map<String, dynamic>, _res.id);
-      } catch (e) {
-        print("Erro ao pegar list $e");
-      }
-    }
-    return null;
-  }
+        if (data.thumb != null && thumb != null) {
+          await deleteListThumb(data.thumb!);
+        }
 
-  Future<bool> createList({required ShopListModel data}) async {
-    String? _id = await MySharedPreferences.getUserId();
+        if (thumb != null) {
+          data.thumb = await saveListThumb(thumb, ref.id);
+        }
 
-    if(_id != null){
-      try {
-        await _db
-            .collection("users")
-            .doc(_id)
-            .collection("lists")
-            .add(data.toJson());
-        return true;
-      } catch (e) {
-        print("Erro ao criar shopList $e");
-      }
-    }
-    return false;
-  }
-
-  Future<bool> updateList(ShopListModel data) async{
-    String? _id = await MySharedPreferences.getUserId();
-
-    if(_id != null){
-      try {
-        await _db
-            .collection("users")
-            .doc(_id)
-            .collection("lists")
-            .doc(data.id)
-            .update(data.toJson());
-
-        return true;
-      } catch (e) {
-        print("Erro ao editar item $e");
-      }
-    }
-    return false;
-  }
-
-  Future<bool> deleteList({required String listId}) async {
-    String? _id = await MySharedPreferences.getUserId();
-
-    if(_id != null){
-      try {
-        await _db
-            .collection("users")
-            .doc(_id)
-            .collection("lists")
-            .doc(listId)
-            .delete();
-        return true;
-      } catch (e) {
-        print("Erro ao excluir $e");
-      }
-    }
-    return false;
-  }
-
-
-  Future<bool> updateItem({required List<ItemModel> itens, required String listId}) async {
-    String? _id = await MySharedPreferences.getUserId();
-
-    if(_id != null){
-      try {
-        await _db
-            .collection("users")
-            .doc(_id)
-            .collection("lists")
-            .doc(listId)
-            .update({
-              "products": itens.map((e) => e.toJson()).toList()
-            });
+        await ref.update(data.toJson());
 
         return true;
       } catch (e) {
         print("Erro ao editar item $e");
+        return false;
       }
     }
     return false;
   }
 
-  Future<bool> deleteItemFromList({required ItemModel item, required String listId}) async {
+  Future<bool> deleteList({required ShopListModel list}) async {
     String? _id = await MySharedPreferences.getUserId();
 
-    if(_id != null){
+    if (_id == null) return false;
+
+    try {
+      if (list.thumb != null) {
+        if (list.thumb!.isNotEmpty) {
+          await deleteListThumb(list.thumb!);
+        }
+      }
+
+      await _db.collection("lists").doc(list.id).delete();
+      return true;
+    } catch (e) {
+      print("Erro ao excluir $e");
+      return false;
+    }
+  }
+
+  Future<bool> updateItem({
+    required List<ItemModel> itens,
+    required String listId,
+    required String userId,
+  }) async {
+    try {
+      await _db
+          .collection("lists")
+          .doc(listId)
+          .update({"products": itens.map((e) => e.toJson()).toList()});
+      return true;
+    } catch (e) {
+      snack.error(text: "Erro ao editar item, $e");
+      return false;
+    }
+  }
+
+  Future<bool> deleteItemFromList({
+    required ItemModel item,
+    required String listId,
+  }) async {
+    String? _id = await MySharedPreferences.getUserId();
+
+    if (_id != null) {
       try {
-        await _db
-            .collection("users")
-            .doc(_id)
-            .collection("lists")
-            .doc(listId)
-            .update({
-              "products": FieldValue.arrayRemove([item.toJson()])
-            });
+        await _db.collection("lists").doc(listId).update({
+          "products": FieldValue.arrayRemove([item.toJson()])
+        });
 
         return true;
       } catch (e) {
         print("Erro ao excluir item $e");
+        return false;
       }
     }
     return false;
   }
 
-  Future<bool> addItemToList({required ItemModel item, required String listId}) async {
+  Future<bool> addItemToList({
+    required ItemModel item,
+    required String listId,
+  }) async {
     String? _id = await MySharedPreferences.getUserId();
 
-    if(_id != null){
-       try {
-        await _db
-          .collection("users")
-          .doc(_id)
-          .collection("lists")
-          .doc(listId)
-          .update({
-            "products": FieldValue.arrayUnion([item.toJson()])
-          });
+    if (_id != null) {
+      try {
+        item.id = uuid.v4();
+
+        await _db.collection("lists").doc(listId).update({
+          "products": FieldValue.arrayUnion([item.toJson()])
+        });
 
         return true;
       } catch (e) {
         print("Erro ao adicionar item $e");
+        return false;
       }
     }
     return false;
   }
 
+  Future<ShopListModel?> getListById(String id) async {
+    try {
+      var res = await _db.collection("lists").doc(id).get();
+      return ShopListModel.fromJson(res.data() as Map<String, dynamic>);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  Future<bool> deleteListThumb(String url) async {
+    try {
+      Reference _ref = storage.refFromURL(url);
+      await _ref.delete();
+      return true;
+    } catch (e) {
+      print("Erro ao deletar foto da lista $e");
+      return false;
+    }
+  }
+
+  Future<String?> saveListThumb(
+    FilePickedModel file,
+    String listId,
+  ) async {
+    try {
+      var url;
+      Reference _reference = storage.ref().child(
+            'lists/$listId/${file.name}',
+          );
+
+      await _reference
+          .putData(file.bytes, SettableMetadata(contentType: file.contentType))
+          .whenComplete(() async {
+        url = await _reference.getDownloadURL();
+      });
+      return url;
+    } catch (e) {
+      print("Erro ao salvar imagem $e");
+      return null;
+    }
+  }
 }
